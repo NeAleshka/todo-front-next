@@ -4,7 +4,7 @@ interface ProductCardProps {
   product: Product;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export const ProductCard = ({ product }: ProductCardProps) => {
   return (
     <div className="product-card">
       <div className="product-image">
