@@ -1,6 +1,22 @@
+"use client";
 import Link from "next/link";
+import { useMe } from "@/api/hooks";
+import { Spinner } from "@/ui/spinner";
 
 export const Header = () => {
+  const {
+    isLoading,
+    error,
+    isError,
+    isLoadingError,
+    isRefetchError,
+    isSuccess,
+  } = useMe();
+  console.log({ isLoading });
+  console.log({ isError });
+  console.log({ isLoadingError });
+  console.log({ isRefetchError });
+  console.log({ isSuccess });
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -30,17 +46,25 @@ export const Header = () => {
             </Link>
           </nav>
           <div className="flex items-center space-x-4">
-            <Link
-              href="/login"
-              className="text-gray-600 font-medium hover:text-blue-600"
+            {isLoading ? (
+              <Spinner />
+            ) : error ? (
+              <Link
+                href="/login"
+                className="text-gray-600 font-medium hover:text-blue-600"
+              >
+                Войти
+              </Link>
+            ) : null}
+
+            <button
+              type={"button"}
+              className="relative p-2 text-gray-600 hover:text-blue-600"
             >
-              Войти
-            </Link>
-            <button className="relative p-2 text-gray-600 hover:text-blue-600">
               <span className="text-2xl">🛒</span>
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+              {/* <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
                 0
-              </span>
+              </span>*/}
             </button>
           </div>
         </div>
