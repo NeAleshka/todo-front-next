@@ -1,7 +1,7 @@
 "use client";
 
 import { type SyntheticEvent, useState } from "react";
-import { useMe } from "@/api/hooks";
+import { useMe } from "@/api/hooks.tsx";
 import { env } from "@/config/env";
 
 export default function Page() {

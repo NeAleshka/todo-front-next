@@ -1,22 +1,10 @@
 "use client";
 import Link from "next/link";
-import { useMe } from "@/api/hooks";
+import { useMe } from "@/api/hooks.tsx";
 import { Spinner } from "@/ui/spinner";
 
 export const Header = () => {
-  const {
-    isLoading,
-    error,
-    isError,
-    isLoadingError,
-    isRefetchError,
-    isSuccess,
-  } = useMe();
-  console.log({ isLoading });
-  console.log({ isError });
-  console.log({ isLoadingError });
-  console.log({ isRefetchError });
-  console.log({ isSuccess });
+  const { isLoading, isError } = useMe();
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -45,10 +33,12 @@ export const Header = () => {
               О нас
             </Link>
           </nav>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 relative">
             {isLoading ? (
-              <Spinner />
-            ) : error ? (
+              <div className={"relative max-h-full w-16"}>
+                <Spinner />
+              </div>
+            ) : isError ? (
               <Link
                 href="/login"
                 className="text-gray-600 font-medium hover:text-blue-600"
