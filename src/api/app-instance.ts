@@ -5,7 +5,7 @@ export const axios = Axios.create({
   withCredentials: true,
 });
 
-export const AppInstance = async <T>(
+export const appInstance = async <T>(
   config: AxiosRequestConfig,
 ): Promise<T> => {
   const source = Axios.CancelToken.source();

@@ -6,5 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export * from './signInBody';
-export * from './signUpBody';
+export type SignInBody = {
+  email: string;
+  password: string;
+};

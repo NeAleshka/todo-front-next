@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import type { Product } from "@/data/products";
 import { Spinner } from "@/ui/spinner";
@@ -17,7 +18,11 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   const currentSrc = hasError ? FALLBACK_IMAGE : product.image;
 
   return (
-    <div className="flex flex-col gap-1">
+    <Link
+      className="flex flex-col gap-1"
+      href={`catalog/${product.id}`}
+      scroll={false}
+    >
       <div className="relative w-50 h-50 overflow-hidden bg-gray-100">
         {isLoading && <Spinner />}
         <Image
@@ -50,6 +55,6 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           </button>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };

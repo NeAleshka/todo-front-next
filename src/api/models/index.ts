@@ -6,5 +6,5 @@
  * OpenAPI spec version: 1.0
  */
 
-export * from './me401';
-export * from '../operation-types';
+export * from "../operation-types";
+export * from "./me401";
