@@ -18,6 +18,9 @@ export default defineConfig({
           path: "./src/api/app-instance.ts",
           name: "appInstance",
         },
+        fetch: {
+          includeHttpResponseReturnType: false,
+        },
       },
       baseUrl: {
         runtime: "env.backendUrl",

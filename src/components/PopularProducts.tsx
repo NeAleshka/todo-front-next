@@ -6,7 +6,7 @@ import { ProductCard } from "./ProductCard";
 export const PopularProducts = () => {
   const { data: products } = useGetAllProducts();
 
-  if (!products) {
+  if (!products?.data) {
     return null;
   }
 
@@ -23,7 +23,7 @@ export const PopularProducts = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.data?.map((product) => (
+        {products?.data.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>

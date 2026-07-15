@@ -9,6 +9,7 @@
 export * from './createProductDto';
 export * from './me401';
 export * from './productDto';
+export * from './productsResponseDto';
 export * from './updateProductDto';
 export * from './userDto';
 export * from '../operation-types';

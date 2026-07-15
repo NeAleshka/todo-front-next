@@ -23,6 +23,11 @@ export default function ProductModal() {
   }, [router]);
 
   const { data: productInfo, isLoading } = useGetProduct(String(id));
+  if (!productInfo) {
+    return <div>Ошибка получения данных</div>;
+  }
+
+  const { name, image, price, description } = productInfo;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -40,15 +45,15 @@ export default function ProductModal() {
             >
               &times;
             </button>
-            <h2 className="text-2xl font-bold mb-4">{productInfo?.name}</h2>
+            <h2 className="text-2xl font-bold mb-4">{name}</h2>
             <Image
-              src={productInfo?.image ?? ""}
-              alt={productInfo?.name ?? ""}
+              src={image ?? ""}
+              alt={name ?? ""}
               width={400}
               height={400}
             />
-            <p>{productInfo?.description}</p>
-            <p>{`Цена: ${productInfo?.price} ₽`}</p>
+            <p>{description}</p>
+            <p>{`Цена: ${price} ₽`}</p>
           </div>
         )}
       </div>

@@ -27,6 +27,7 @@ import type {
   CreateProductDto,
   Me401,
   ProductDto,
+  ProductsResponseDto,
   SignInBody,
   SignUpBody,
   UpdateProductDto,
@@ -53,25 +54,6 @@ const withQueryKey = <T extends object, K>(
   return result;
 };
 
-export type meResponse200 = {
-  data: UserDto;
-  status: 200;
-};
-
-export type meResponse401 = {
-  data: Me401;
-  status: 401;
-};
-
-export type meResponseSuccess = meResponse200 & {
-  headers: Headers;
-};
-export type meResponseError = meResponse401 & {
-  headers: Headers;
-};
-
-export type meResponse = meResponseSuccess | meResponseError;
-
 export const getMeUrl = () => {
   return `${env.backendUrl}/auth/me`;
 };
@@ -80,8 +62,8 @@ export const getMeUrl = () => {
  * Проверяет валидность токена
  * @summary Проверка авторизации
  */
-export const me = async (options?: RequestInit): Promise<meResponse> => {
-  return appInstance<meResponse>(getMeUrl(), {
+export const me = async (options?: RequestInit): Promise<UserDto> => {
+  return appInstance<UserDto>(getMeUrl(), {
     ...options,
     method: "GET",
   });
@@ -191,17 +173,6 @@ export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = Me401>(
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-export type signInResponse201 = {
-  data: void;
-  status: 201;
-};
-
-export type signInResponseSuccess = signInResponse201 & {
-  headers: Headers;
-};
-
-export type signInResponse = signInResponseSuccess;
-
 export const getSignInUrl = () => {
   return `${env.backendUrl}/auth/signIn`;
 };
@@ -212,8 +183,8 @@ export const getSignInUrl = () => {
 export const signIn = async (
   signInBody: SignInBody,
   options?: RequestInit,
-): Promise<signInResponse> => {
-  return appInstance<signInResponse>(getSignInUrl(), {
+): Promise<void> => {
+  return appInstance<void>(getSignInUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
@@ -288,30 +259,6 @@ export const useSignIn = <TError = unknown, TContext = unknown>(
   return useMutation(getSignInMutationOptions(options), queryClient);
 };
 
-export type signUpResponse200 = {
-  data: unknown;
-  status: 200;
-};
-
-export type signUpResponse400 = {
-  data: void;
-  status: 400;
-};
-
-export type signUpResponse500 = {
-  data: void;
-  status: 500;
-};
-
-export type signUpResponseSuccess = signUpResponse200 & {
-  headers: Headers;
-};
-export type signUpResponseError = (signUpResponse400 | signUpResponse500) & {
-  headers: Headers;
-};
-
-export type signUpResponse = signUpResponseSuccess | signUpResponseError;
-
 export const getSignUpUrl = () => {
   return `${env.backendUrl}/auth/signUp`;
 };
@@ -323,8 +270,8 @@ export const getSignUpUrl = () => {
 export const signUp = async (
   signUpBody: SignUpBody,
   options?: RequestInit,
-): Promise<signUpResponse> => {
-  return appInstance<signUpResponse>(getSignUpUrl(), {
+): Promise<unknown> => {
+  return appInstance<unknown>(getSignUpUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
@@ -399,19 +346,6 @@ export const useSignUp = <TError = void, TContext = unknown>(
   return useMutation(getSignUpMutationOptions(options), queryClient);
 };
 
-export type productsControllerCreateResponse201 = {
-  data: void;
-  status: 201;
-};
-
-export type productsControllerCreateResponseSuccess =
-  productsControllerCreateResponse201 & {
-    headers: Headers;
-  };
-
-export type productsControllerCreateResponse =
-  productsControllerCreateResponseSuccess;
-
 export const getProductsControllerCreateUrl = () => {
   return `${env.backendUrl}/products`;
 };
@@ -419,16 +353,13 @@ export const getProductsControllerCreateUrl = () => {
 export const productsControllerCreate = async (
   createProductDto: CreateProductDto,
   options?: RequestInit,
-): Promise<productsControllerCreateResponse> => {
-  return appInstance<productsControllerCreateResponse>(
-    getProductsControllerCreateUrl(),
-    {
-      ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(createProductDto),
-    },
-  );
+): Promise<void> => {
+  return appInstance<void>(getProductsControllerCreateUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createProductDto),
+  });
 };
 
 export const getProductsControllerCreateMutationOptions = <
@@ -501,35 +432,6 @@ export const useProductsControllerCreate = <
   );
 };
 
-export type getAllProductsResponse200 = {
-  data: ProductDto[];
-  status: 200;
-};
-
-export type getAllProductsResponse400 = {
-  data: void;
-  status: 400;
-};
-
-export type getAllProductsResponse500 = {
-  data: void;
-  status: 500;
-};
-
-export type getAllProductsResponseSuccess = getAllProductsResponse200 & {
-  headers: Headers;
-};
-export type getAllProductsResponseError = (
-  | getAllProductsResponse400
-  | getAllProductsResponse500
-) & {
-  headers: Headers;
-};
-
-export type getAllProductsResponse =
-  | getAllProductsResponseSuccess
-  | getAllProductsResponseError;
-
 export const getGetAllProductsUrl = () => {
   return `${env.backendUrl}/products/getAll`;
 };
@@ -540,8 +442,8 @@ export const getGetAllProductsUrl = () => {
  */
 export const getAllProducts = async (
   options?: RequestInit,
-): Promise<getAllProductsResponse> => {
-  return appInstance<getAllProductsResponse>(getGetAllProductsUrl(), {
+): Promise<ProductsResponseDto> => {
+  return appInstance<ProductsResponseDto>(getGetAllProductsUrl(), {
     ...options,
     method: "GET",
   });
@@ -666,35 +568,6 @@ export function useGetAllProducts<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-export type getProductResponse200 = {
-  data: ProductDto;
-  status: 200;
-};
-
-export type getProductResponse400 = {
-  data: void;
-  status: 400;
-};
-
-export type getProductResponse500 = {
-  data: void;
-  status: 500;
-};
-
-export type getProductResponseSuccess = getProductResponse200 & {
-  headers: Headers;
-};
-export type getProductResponseError = (
-  | getProductResponse400
-  | getProductResponse500
-) & {
-  headers: Headers;
-};
-
-export type getProductResponse =
-  | getProductResponseSuccess
-  | getProductResponseError;
-
 export const getGetProductUrl = (id: string) => {
   return `${env.backendUrl}/products/${id}`;
 };
@@ -706,8 +579,8 @@ export const getGetProductUrl = (id: string) => {
 export const getProduct = async (
   id: string,
   options?: RequestInit,
-): Promise<getProductResponse> => {
-  return appInstance<getProductResponse>(getGetProductUrl(id), {
+): Promise<ProductDto> => {
+  return appInstance<ProductDto>(getGetProductUrl(id), {
     ...options,
     method: "GET",
   });
@@ -844,19 +717,6 @@ export function useGetProduct<
   return withQueryKey(query, queryOptions.queryKey);
 }
 
-export type productsControllerUpdateResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type productsControllerUpdateResponseSuccess =
-  productsControllerUpdateResponse200 & {
-    headers: Headers;
-  };
-
-export type productsControllerUpdateResponse =
-  productsControllerUpdateResponseSuccess;
-
 export const getProductsControllerUpdateUrl = (id: string) => {
   return `${env.backendUrl}/products/${id}`;
 };
@@ -865,16 +725,13 @@ export const productsControllerUpdate = async (
   id: string,
   updateProductDto: UpdateProductDto,
   options?: RequestInit,
-): Promise<productsControllerUpdateResponse> => {
-  return appInstance<productsControllerUpdateResponse>(
-    getProductsControllerUpdateUrl(id),
-    {
-      ...options,
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(updateProductDto),
-    },
-  );
+): Promise<void> => {
+  return appInstance<void>(getProductsControllerUpdateUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateProductDto),
+  });
 };
 
 export const getProductsControllerUpdateMutationOptions = <
@@ -947,19 +804,6 @@ export const useProductsControllerUpdate = <
   );
 };
 
-export type productsControllerRemoveResponse200 = {
-  data: void;
-  status: 200;
-};
-
-export type productsControllerRemoveResponseSuccess =
-  productsControllerRemoveResponse200 & {
-    headers: Headers;
-  };
-
-export type productsControllerRemoveResponse =
-  productsControllerRemoveResponseSuccess;
-
 export const getProductsControllerRemoveUrl = (id: string) => {
   return `${env.backendUrl}/products/${id}`;
 };
@@ -967,14 +811,11 @@ export const getProductsControllerRemoveUrl = (id: string) => {
 export const productsControllerRemove = async (
   id: string,
   options?: RequestInit,
-): Promise<productsControllerRemoveResponse> => {
-  return appInstance<productsControllerRemoveResponse>(
-    getProductsControllerRemoveUrl(id),
-    {
-      ...options,
-      method: "DELETE",
-    },
-  );
+): Promise<void> => {
+  return appInstance<void>(getProductsControllerRemoveUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
 };
 
 export const getProductsControllerRemoveMutationOptions = <
