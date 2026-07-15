@@ -1,19 +1,16 @@
 "use client";
-import { notFound, useParams } from "next/navigation";
+import type { ProductDto } from "@/api/models";
 import Breadcrumbs from "@/components/Breadcrumbs";
-import { products } from "@/data/products";
 
-const ProductPage = () => {
-  const { id } = useParams();
-  const product = products.find((product) => product.id === Number(id));
+interface PageProps {
+  product: ProductDto;
+}
 
-  if (!product) return notFound();
-  const { name, image, description, price, category } = product;
-
+const ProductPage = ({ product }: PageProps) => {
   return (
     <div>
-      <Breadcrumbs />
-      {`${id} product`}
+      <Breadcrumbs productName={product.name} />
+      {product?.name}
     </div>
   );
 };

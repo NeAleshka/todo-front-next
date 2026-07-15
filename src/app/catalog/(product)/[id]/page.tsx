@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { getProduct } from "@/api/hooks.tsx";
 import ProductPage from "@/app/catalog/(product)/[id]/productPage";
-import { products } from "@/data/products";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -9,8 +10,9 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
+  const product = await getProduct(id);
 
-  const product = products.find((p) => p.id === Number(id));
+  if (!product) return notFound();
 
   return {
     title: `My Shop | ${product?.name}`,
@@ -25,10 +27,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-const Page = () => {
+const Page = async ({ params }: Props) => {
+  const { id } = await params;
+  const product = await getProduct(id);
+
   return (
     <div>
-      <ProductPage />
+      <ProductPage product={product} />
     </div>
   );
 };

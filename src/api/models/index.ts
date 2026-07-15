@@ -6,6 +6,9 @@
  * OpenAPI spec version: 1.0
  */
 
+export * from './createProductDto';
 export * from './me401';
+export * from './productDto';
+export * from './updateProductDto';
 export * from './userDto';
 export * from '../operation-types';

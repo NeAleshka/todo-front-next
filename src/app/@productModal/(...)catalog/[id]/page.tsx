@@ -1,3 +1,4 @@
+"use client";
 import ProductModal from "@/app/@productModal/(...)catalog/[id]/productModal";
 
 const Page = () => {

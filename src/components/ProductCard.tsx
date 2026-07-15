@@ -2,11 +2,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import type { Product } from "@/data/products";
+import type { ProductDto } from "@/api/models";
 import { Spinner } from "@/ui/spinner";
 
 interface ProductCardProps {
-  product: Product;
+  product: ProductDto;
 }
 
 const FALLBACK_IMAGE = "/nof-found-img.jpg";
@@ -27,13 +27,12 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         <div className="relative w-50 h-50 overflow-hidden bg-gray-100">
           {isLoading && <Spinner />}
           <Image
-            src={currentSrc} // Динамический src
+            src={currentSrc ?? ""}
             alt={product.name}
-            width={200}
-            height={200}
-            className="object-cover w-full h-full"
             sizes="200px"
             unoptimized
+            priority
+            fill
             onLoad={() => setIsLoading(false)}
             onError={() => {
               if (!hasError) {
@@ -44,12 +43,12 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           />
         </div>
         <div className="product-info">
-          <span className="product-category">{product.category}</span>
+          {/*<span className="product-category">{product.category}</span>*/}
           <h3 className="product-name">{product.name}</h3>
           <p className="product-description">{product.description}</p>
           <div className="product-footer">
             <span className="product-price">
-              {product.price.toLocaleString("ru-RU")} ₽
+              {product.price.toLocaleString()} ₽
             </span>
             <button type="button" className="add-to-cart-btn">
               В корзину

@@ -7,7 +7,7 @@ export default defineConfig({
       target: "http://localhost:3000/swagger-json",
     },
     output: {
-      httpClient: "axios",
+      httpClient: "fetch",
       mode: "split",
       target: "./src/api/hooks.tsx",
       schemas: "./src/api/models",

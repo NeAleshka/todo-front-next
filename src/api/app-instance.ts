@@ -1,18 +1,24 @@
-import Axios, { type AxiosRequestConfig } from "axios";
-
-export const axios = Axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "/api",
-  withCredentials: true,
-});
-
 export const appInstance = async <T>(
-  config: AxiosRequestConfig,
+  url: string,
+  options?: RequestInit,
 ): Promise<T> => {
-  const source = Axios.CancelToken.source();
-
-  const response = await axios.request<T>({
-    ...config,
-    cancelToken: source.token,
+  const response = await fetch(url, {
+    ...options,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
   });
-  return response.data;
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Ошибка ${response.status}: ${errorText}`);
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  return response.json();
 };

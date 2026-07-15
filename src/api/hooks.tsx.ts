@@ -23,7 +23,17 @@ import type {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { env } from "@/config/env";
 import { appInstance } from "./app-instance";
-import type { Me401, SignInBody, SignUpBody, UserDto } from "./models";
+import type {
+  CreateProductDto,
+  Me401,
+  ProductDto,
+  SignInBody,
+  SignUpBody,
+  UpdateProductDto,
+  UserDto,
+} from "./models";
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 const withQueryKey = <T extends object, K>(
   query: T,
@@ -43,140 +53,37 @@ const withQueryKey = <T extends object, K>(
   return result;
 };
 
-/**
- * @summary Авторизация через Google
- */
-export const googleAuth = (signal?: AbortSignal) => {
-  return appInstance<void>({
-    url: `${env.backendUrl}/auth/google`,
-    method: "GET",
-    signal,
-  });
+export type meResponse200 = {
+  data: UserDto;
+  status: 200;
 };
 
-export const getGoogleAuthQueryKey = () => {
-  return [`${env.backendUrl}/auth/google`] as const;
+export type meResponse401 = {
+  data: Me401;
+  status: 401;
 };
 
-export const getGoogleAuthQueryOptions = <
-  TData = Awaited<ReturnType<typeof googleAuth>>,
-  TError = unknown,
->(options?: {
-  query?: Partial<
-    UseQueryOptions<Awaited<ReturnType<typeof googleAuth>>, TError, TData>
-  >;
-}) => {
-  const { query: queryOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getGoogleAuthQueryKey();
-
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof googleAuth>>> = ({
-    signal,
-  }) => googleAuth(signal);
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof googleAuth>>,
-    TError,
-    TData
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
+export type meResponseSuccess = meResponse200 & {
+  headers: Headers;
+};
+export type meResponseError = meResponse401 & {
+  headers: Headers;
 };
 
-export type GoogleAuthQueryResult = NonNullable<
-  Awaited<ReturnType<typeof googleAuth>>
->;
-export type GoogleAuthQueryError = unknown;
+export type meResponse = meResponseSuccess | meResponseError;
 
-export function useGoogleAuth<
-  TData = Awaited<ReturnType<typeof googleAuth>>,
-  TError = unknown,
->(
-  options: {
-    query: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof googleAuth>>, TError, TData>
-    > &
-      Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof googleAuth>>,
-          TError,
-          Awaited<ReturnType<typeof googleAuth>>
-        >,
-        "initialData"
-      >;
-  },
-  queryClient?: QueryClient,
-): DefinedUseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
+export const getMeUrl = () => {
+  return `${env.backendUrl}/auth/me`;
 };
-export function useGoogleAuth<
-  TData = Awaited<ReturnType<typeof googleAuth>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof googleAuth>>, TError, TData>
-    > &
-      Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof googleAuth>>,
-          TError,
-          Awaited<ReturnType<typeof googleAuth>>
-        >,
-        "initialData"
-      >;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-export function useGoogleAuth<
-  TData = Awaited<ReturnType<typeof googleAuth>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof googleAuth>>, TError, TData>
-    >;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-};
-/**
- * @summary Авторизация через Google
- */
-
-export function useGoogleAuth<
-  TData = Awaited<ReturnType<typeof googleAuth>>,
-  TError = unknown,
->(
-  options?: {
-    query?: Partial<
-      UseQueryOptions<Awaited<ReturnType<typeof googleAuth>>, TError, TData>
-    >;
-  },
-  queryClient?: QueryClient,
-): UseQueryResult<TData, TError> & {
-  queryKey: DataTag<QueryKey, TData, TError>;
-} {
-  const queryOptions = getGoogleAuthQueryOptions(options);
-
-  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
-    TData,
-    TError
-  > & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
 
 /**
  * Проверяет валидность токена
  * @summary Проверка авторизации
  */
-export const me = (signal?: AbortSignal) => {
-  return appInstance<UserDto>({
-    url: `${env.backendUrl}/auth/me`,
+export const me = async (options?: RequestInit): Promise<meResponse> => {
+  return appInstance<meResponse>(getMeUrl(), {
+    ...options,
     method: "GET",
-    signal,
   });
 };
 
@@ -191,13 +98,14 @@ export const getMeQueryOptions = <
   query?: Partial<
     UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>
   >;
+  request?: SecondParameter<typeof appInstance>;
 }) => {
-  const { query: queryOptions } = options ?? {};
+  const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey = queryOptions?.queryKey ?? getMeQueryKey();
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof me>>> = ({ signal }) =>
-    me(signal);
+    me({ signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof me>>,
@@ -222,6 +130,7 @@ export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = Me401>(
         >,
         "initialData"
       >;
+    request?: SecondParameter<typeof appInstance>;
   },
   queryClient?: QueryClient,
 ): DefinedUseQueryResult<TData, TError> & {
@@ -240,6 +149,7 @@ export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = Me401>(
         >,
         "initialData"
       >;
+    request?: SecondParameter<typeof appInstance>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -250,6 +160,7 @@ export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = Me401>(
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>
     >;
+    request?: SecondParameter<typeof appInstance>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -264,6 +175,7 @@ export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = Me401>(
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof me>>, TError, TData>
     >;
+    request?: SecondParameter<typeof appInstance>;
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & {
@@ -279,16 +191,33 @@ export function useMe<TData = Awaited<ReturnType<typeof me>>, TError = Me401>(
   return withQueryKey(query, queryOptions.queryKey);
 }
 
+export type signInResponse201 = {
+  data: void;
+  status: 201;
+};
+
+export type signInResponseSuccess = signInResponse201 & {
+  headers: Headers;
+};
+
+export type signInResponse = signInResponseSuccess;
+
+export const getSignInUrl = () => {
+  return `${env.backendUrl}/auth/signIn`;
+};
+
 /**
  * @summary Вход по логину и паролю
  */
-export const signIn = (signInBody: SignInBody, signal?: AbortSignal) => {
-  return appInstance<void>({
-    url: `${env.backendUrl}/auth/signIn`,
+export const signIn = async (
+  signInBody: SignInBody,
+  options?: RequestInit,
+): Promise<signInResponse> => {
+  return appInstance<signInResponse>(getSignInUrl(), {
+    ...options,
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    data: signInBody,
-    signal,
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(signInBody),
   });
 };
 
@@ -302,6 +231,7 @@ export const getSignInMutationOptions = <
     { data: SignInBody },
     TContext
   >;
+  request?: SecondParameter<typeof appInstance>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof signIn>>,
   TError,
@@ -309,13 +239,13 @@ export const getSignInMutationOptions = <
   TContext
 > => {
   const mutationKey = ["signIn"];
-  const { mutation: mutationOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey } };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof signIn>>,
@@ -323,7 +253,7 @@ export const getSignInMutationOptions = <
   > = (props) => {
     const { data } = props ?? {};
 
-    return signIn(data);
+    return signIn(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -346,6 +276,7 @@ export const useSignIn = <TError = unknown, TContext = unknown>(
       { data: SignInBody },
       TContext
     >;
+    request?: SecondParameter<typeof appInstance>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
@@ -357,17 +288,47 @@ export const useSignIn = <TError = unknown, TContext = unknown>(
   return useMutation(getSignInMutationOptions(options), queryClient);
 };
 
+export type signUpResponse200 = {
+  data: unknown;
+  status: 200;
+};
+
+export type signUpResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type signUpResponse500 = {
+  data: void;
+  status: 500;
+};
+
+export type signUpResponseSuccess = signUpResponse200 & {
+  headers: Headers;
+};
+export type signUpResponseError = (signUpResponse400 | signUpResponse500) & {
+  headers: Headers;
+};
+
+export type signUpResponse = signUpResponseSuccess | signUpResponseError;
+
+export const getSignUpUrl = () => {
+  return `${env.backendUrl}/auth/signUp`;
+};
+
 /**
  * Создаёт нового пользователя и возвращает accessToken в cookie
  * @summary Регистрация нового пользователя
  */
-export const signUp = (signUpBody: SignUpBody, signal?: AbortSignal) => {
-  return appInstance<unknown>({
-    url: `${env.backendUrl}/auth/signUp`,
+export const signUp = async (
+  signUpBody: SignUpBody,
+  options?: RequestInit,
+): Promise<signUpResponse> => {
+  return appInstance<signUpResponse>(getSignUpUrl(), {
+    ...options,
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    data: signUpBody,
-    signal,
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(signUpBody),
   });
 };
 
@@ -381,6 +342,7 @@ export const getSignUpMutationOptions = <
     { data: SignUpBody },
     TContext
   >;
+  request?: SecondParameter<typeof appInstance>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof signUp>>,
   TError,
@@ -388,13 +350,13 @@ export const getSignUpMutationOptions = <
   TContext
 > => {
   const mutationKey = ["signUp"];
-  const { mutation: mutationOptions } = options
+  const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
       options.mutation.mutationKey
       ? options
       : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey } };
+    : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof signUp>>,
@@ -402,7 +364,7 @@ export const getSignUpMutationOptions = <
   > = (props) => {
     const { data } = props ?? {};
 
-    return signUp(data);
+    return signUp(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -425,6 +387,7 @@ export const useSignUp = <TError = void, TContext = unknown>(
       { data: SignUpBody },
       TContext
     >;
+    request?: SecondParameter<typeof appInstance>;
   },
   queryClient?: QueryClient,
 ): UseMutationResult<
@@ -434,4 +397,652 @@ export const useSignUp = <TError = void, TContext = unknown>(
   TContext
 > => {
   return useMutation(getSignUpMutationOptions(options), queryClient);
+};
+
+export type productsControllerCreateResponse201 = {
+  data: void;
+  status: 201;
+};
+
+export type productsControllerCreateResponseSuccess =
+  productsControllerCreateResponse201 & {
+    headers: Headers;
+  };
+
+export type productsControllerCreateResponse =
+  productsControllerCreateResponseSuccess;
+
+export const getProductsControllerCreateUrl = () => {
+  return `${env.backendUrl}/products`;
+};
+
+export const productsControllerCreate = async (
+  createProductDto: CreateProductDto,
+  options?: RequestInit,
+): Promise<productsControllerCreateResponse> => {
+  return appInstance<productsControllerCreateResponse>(
+    getProductsControllerCreateUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createProductDto),
+    },
+  );
+};
+
+export const getProductsControllerCreateMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof productsControllerCreate>>,
+    TError,
+    { data: CreateProductDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof appInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof productsControllerCreate>>,
+  TError,
+  { data: CreateProductDto },
+  TContext
+> => {
+  const mutationKey = ["productsControllerCreate"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof productsControllerCreate>>,
+    { data: CreateProductDto }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return productsControllerCreate(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ProductsControllerCreateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof productsControllerCreate>>
+>;
+export type ProductsControllerCreateMutationBody = CreateProductDto;
+export type ProductsControllerCreateMutationError = unknown;
+
+export const useProductsControllerCreate = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof productsControllerCreate>>,
+      TError,
+      { data: CreateProductDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof appInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof productsControllerCreate>>,
+  TError,
+  { data: CreateProductDto },
+  TContext
+> => {
+  return useMutation(
+    getProductsControllerCreateMutationOptions(options),
+    queryClient,
+  );
+};
+
+export type getAllProductsResponse200 = {
+  data: ProductDto[];
+  status: 200;
+};
+
+export type getAllProductsResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type getAllProductsResponse500 = {
+  data: void;
+  status: 500;
+};
+
+export type getAllProductsResponseSuccess = getAllProductsResponse200 & {
+  headers: Headers;
+};
+export type getAllProductsResponseError = (
+  | getAllProductsResponse400
+  | getAllProductsResponse500
+) & {
+  headers: Headers;
+};
+
+export type getAllProductsResponse =
+  | getAllProductsResponseSuccess
+  | getAllProductsResponseError;
+
+export const getGetAllProductsUrl = () => {
+  return `${env.backendUrl}/products/getAll`;
+};
+
+/**
+ * Получение всех товаров
+ * @summary Получение товаров
+ */
+export const getAllProducts = async (
+  options?: RequestInit,
+): Promise<getAllProductsResponse> => {
+  return appInstance<getAllProductsResponse>(getGetAllProductsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetAllProductsQueryKey = () => {
+  return [`${env.backendUrl}/products/getAll`] as const;
+};
+
+export const getGetAllProductsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAllProducts>>,
+  TError = void,
+>(options?: {
+  query?: Partial<
+    UseQueryOptions<Awaited<ReturnType<typeof getAllProducts>>, TError, TData>
+  >;
+  request?: SecondParameter<typeof appInstance>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetAllProductsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAllProducts>>> = ({
+    signal,
+  }) => getAllProducts({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAllProducts>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetAllProductsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAllProducts>>
+>;
+export type GetAllProductsQueryError = void;
+
+export function useGetAllProducts<
+  TData = Awaited<ReturnType<typeof getAllProducts>>,
+  TError = void,
+>(
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAllProducts>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllProducts>>,
+          TError,
+          Awaited<ReturnType<typeof getAllProducts>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof appInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetAllProducts<
+  TData = Awaited<ReturnType<typeof getAllProducts>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAllProducts>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAllProducts>>,
+          TError,
+          Awaited<ReturnType<typeof getAllProducts>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof appInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetAllProducts<
+  TData = Awaited<ReturnType<typeof getAllProducts>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAllProducts>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof appInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Получение товаров
+ */
+
+export function useGetAllProducts<
+  TData = Awaited<ReturnType<typeof getAllProducts>>,
+  TError = void,
+>(
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getAllProducts>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof appInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetAllProductsQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type getProductResponse200 = {
+  data: ProductDto;
+  status: 200;
+};
+
+export type getProductResponse400 = {
+  data: void;
+  status: 400;
+};
+
+export type getProductResponse500 = {
+  data: void;
+  status: 500;
+};
+
+export type getProductResponseSuccess = getProductResponse200 & {
+  headers: Headers;
+};
+export type getProductResponseError = (
+  | getProductResponse400
+  | getProductResponse500
+) & {
+  headers: Headers;
+};
+
+export type getProductResponse =
+  | getProductResponseSuccess
+  | getProductResponseError;
+
+export const getGetProductUrl = (id: string) => {
+  return `${env.backendUrl}/products/${id}`;
+};
+
+/**
+ * Получение товара
+ * @summary Получение товара
+ */
+export const getProduct = async (
+  id: string,
+  options?: RequestInit,
+): Promise<getProductResponse> => {
+  return appInstance<getProductResponse>(getGetProductUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetProductQueryKey = (id: string) => {
+  return [`${env.backendUrl}/products/${id}`] as const;
+};
+
+export const getGetProductQueryOptions = <
+  TData = Awaited<ReturnType<typeof getProduct>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getProduct>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof appInstance>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetProductQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getProduct>>> = ({
+    signal,
+  }) => getProduct(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getProduct>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetProductQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getProduct>>
+>;
+export type GetProductQueryError = void;
+
+export function useGetProduct<
+  TData = Awaited<ReturnType<typeof getProduct>>,
+  TError = void,
+>(
+  id: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getProduct>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProduct>>,
+          TError,
+          Awaited<ReturnType<typeof getProduct>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof appInstance>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetProduct<
+  TData = Awaited<ReturnType<typeof getProduct>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getProduct>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProduct>>,
+          TError,
+          Awaited<ReturnType<typeof getProduct>>
+        >,
+        "initialData"
+      >;
+    request?: SecondParameter<typeof appInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetProduct<
+  TData = Awaited<ReturnType<typeof getProduct>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getProduct>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof appInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Получение товара
+ */
+
+export function useGetProduct<
+  TData = Awaited<ReturnType<typeof getProduct>>,
+  TError = void,
+>(
+  id: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getProduct>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof appInstance>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetProductQueryOptions(id, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type productsControllerUpdateResponse200 = {
+  data: void;
+  status: 200;
+};
+
+export type productsControllerUpdateResponseSuccess =
+  productsControllerUpdateResponse200 & {
+    headers: Headers;
+  };
+
+export type productsControllerUpdateResponse =
+  productsControllerUpdateResponseSuccess;
+
+export const getProductsControllerUpdateUrl = (id: string) => {
+  return `${env.backendUrl}/products/${id}`;
+};
+
+export const productsControllerUpdate = async (
+  id: string,
+  updateProductDto: UpdateProductDto,
+  options?: RequestInit,
+): Promise<productsControllerUpdateResponse> => {
+  return appInstance<productsControllerUpdateResponse>(
+    getProductsControllerUpdateUrl(id),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateProductDto),
+    },
+  );
+};
+
+export const getProductsControllerUpdateMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof productsControllerUpdate>>,
+    TError,
+    { id: string; data: UpdateProductDto },
+    TContext
+  >;
+  request?: SecondParameter<typeof appInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof productsControllerUpdate>>,
+  TError,
+  { id: string; data: UpdateProductDto },
+  TContext
+> => {
+  const mutationKey = ["productsControllerUpdate"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof productsControllerUpdate>>,
+    { id: string; data: UpdateProductDto }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return productsControllerUpdate(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ProductsControllerUpdateMutationResult = NonNullable<
+  Awaited<ReturnType<typeof productsControllerUpdate>>
+>;
+export type ProductsControllerUpdateMutationBody = UpdateProductDto;
+export type ProductsControllerUpdateMutationError = unknown;
+
+export const useProductsControllerUpdate = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof productsControllerUpdate>>,
+      TError,
+      { id: string; data: UpdateProductDto },
+      TContext
+    >;
+    request?: SecondParameter<typeof appInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof productsControllerUpdate>>,
+  TError,
+  { id: string; data: UpdateProductDto },
+  TContext
+> => {
+  return useMutation(
+    getProductsControllerUpdateMutationOptions(options),
+    queryClient,
+  );
+};
+
+export type productsControllerRemoveResponse200 = {
+  data: void;
+  status: 200;
+};
+
+export type productsControllerRemoveResponseSuccess =
+  productsControllerRemoveResponse200 & {
+    headers: Headers;
+  };
+
+export type productsControllerRemoveResponse =
+  productsControllerRemoveResponseSuccess;
+
+export const getProductsControllerRemoveUrl = (id: string) => {
+  return `${env.backendUrl}/products/${id}`;
+};
+
+export const productsControllerRemove = async (
+  id: string,
+  options?: RequestInit,
+): Promise<productsControllerRemoveResponse> => {
+  return appInstance<productsControllerRemoveResponse>(
+    getProductsControllerRemoveUrl(id),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getProductsControllerRemoveMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof productsControllerRemove>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof appInstance>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof productsControllerRemove>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["productsControllerRemove"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof productsControllerRemove>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return productsControllerRemove(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ProductsControllerRemoveMutationResult = NonNullable<
+  Awaited<ReturnType<typeof productsControllerRemove>>
+>;
+
+export type ProductsControllerRemoveMutationError = unknown;
+
+export const useProductsControllerRemove = <
+  TError = unknown,
+  TContext = unknown,
+>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof productsControllerRemove>>,
+      TError,
+      { id: string },
+      TContext
+    >;
+    request?: SecondParameter<typeof appInstance>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof productsControllerRemove>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(
+    getProductsControllerRemoveMutationOptions(options),
+    queryClient,
+  );
 };

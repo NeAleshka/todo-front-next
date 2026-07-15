@@ -1,8 +1,15 @@
+"use client";
 import Link from "next/link";
-import { products } from "@/data/products";
+import { useGetAllProducts } from "@/api/hooks.tsx";
 import { ProductCard } from "./ProductCard";
 
 export const PopularProducts = () => {
+  const { data: products } = useGetAllProducts();
+
+  if (!products) {
+    return null;
+  }
+
   return (
     <section>
       <div className="flex justify-between items-center mb-6">
@@ -16,7 +23,7 @@ export const PopularProducts = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map((product) => (
+        {products.data?.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
