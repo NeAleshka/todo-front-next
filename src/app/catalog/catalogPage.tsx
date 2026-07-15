@@ -2,11 +2,11 @@
 import { useGetAllProducts } from "@/api/hooks.tsx";
 
 const CatalogPage = () => {
-  const { data } = useGetAllProducts();
+  const { data: products } = useGetAllProducts();
 
   return (
     <div>
-      {data?.map((product) => (
+      {products?.data?.map((product) => (
         <div key={product.id}>{product.id}</div>
       ))}
     </div>
