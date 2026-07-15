@@ -8,7 +8,10 @@ export const HeroSection = () => {
         <p className="text-lg md:text-xl mb-6 opacity-90">
           Лучшие товары по отличным ценам. Найди то, что искал!
         </p>
-        <button className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+        <button
+          type={"button"}
+          className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+        >
           Смотреть каталог
         </button>
       </div>
